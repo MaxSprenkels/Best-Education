@@ -87,7 +87,7 @@ export class StartScene extends Phaser.Scene {
 
         buttonBg.on('pointerdown', () => {
             clickSound.play();
-            this.scene.start('GameScene');
+            this.scene.start('Game');
         });
     }
 }

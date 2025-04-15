@@ -8,6 +8,12 @@ const config = {
     scene: [StartScene, Game],
     parent: 'game-container',
     backgroundColor: '#000000',
+    physics: {
+        default: 'arcade',
+        arcade: {
+            debug: false
+        }
+    },
     scale: {
         mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH
@@ -15,4 +21,3 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
-console.log("Phaser game initialized!");
