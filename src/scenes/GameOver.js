@@ -29,12 +29,16 @@ export class GameOver extends Phaser.Scene {
         logo.setScale(0.08);
 
         // Titel
-        this.add.text(centerX, centerY - 80, 'Game over', {
+        this.add.text(centerX, centerY - 120, 'Game over', {
             fontSize: '64px',
             fill: '#ffffff'
         }).setOrigin(0.5);
 
-
+        // Score
+        this.add.text(centerX, centerY - 50, `${data.score}`, {
+            fontSize: '32px',
+            fill: '#ffffff'
+        }).setOrigin(0.5);
 
         const createButton = (text, onClick, offsetY, icon) => {
             const container = this.add.container(centerX, centerY + offsetY).setDepth(201);
@@ -96,11 +100,9 @@ export class GameOver extends Phaser.Scene {
 
         createButton('🚀 Opnieuw spelen', () => {
             this.scene.start('Game');
-        }, 0, 'rocketIcon');
-
+        }, 40, 'rocketIcon');
         createButton('🚀 Terug naar menu', () => {
             this.scene.start('StartScene');
-        }, 100, 'rocketIcon');
-
+        }, 120, 'rocketIcon');
     }
 }

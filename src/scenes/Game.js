@@ -17,6 +17,9 @@ export class Game extends Phaser.Scene {
         this.load.image('enemyBlue1', 'assets/images/enemyBlue1.png');
         this.load.image('enemyGreen1', 'assets/images/enemyGreen1.png');
         this.load.image('enemyRed1', 'assets/images/enemyRed1.png');
+        // Stars
+        this.load.image('star_gold', 'assets/images/star_gold.png');
+        this.load.image('star_silver', 'assets/images/star_silver.png');
         // Sounds
         this.load.audio('hoverSound', 'assets/sounds/hover.wav');
         this.load.audio('clickSound', 'assets/sounds/click.wav');
@@ -26,6 +29,7 @@ export class Game extends Phaser.Scene {
     create() {
         this.gameOverTriggered = false;
         this.isGameOver = false;
+        this.score = 0;
 
         // Achtergrond
         this.add.image(0, 0, 'background')
@@ -73,16 +77,20 @@ export class Game extends Phaser.Scene {
             }
         });
 
-        // Enemy groep
+        // Groepen
         this.enemies = this.physics.add.group();
+        this.stars = this.physics.add.group();
 
-        // Spawn enemies
+        // Spawners
         this.time.addEvent({
             delay: 1500,
             callback: this.createEnemy,
             callbackScope: this,
             loop: true
         });
+
+        // Collisions
+        this.physics.add.overlap(this.rocketBody, this.stars, this.collectStar, null, this);
 
         // Controls
         this.setupControls();
@@ -124,27 +132,64 @@ export class Game extends Phaser.Scene {
                 enemy.destroy();
             }
         });
+
+        // Verwijder sterren buiten scherm
+        this.stars.getChildren().forEach(star => {
+            if (star.x < -star.width) {
+                star.destroy();
+            }
+        });
     }
 
     createEnemy() {
         const enemyTypes = ['enemyBlack1', 'enemyBlue1', 'enemyGreen1', 'enemyRed1'];
+        const starTypes = ['star_silver', 'star_gold'];
+
         const randomY = Phaser.Math.Between(60, this.scale.height - 60);
-        const randomEnemy = Phaser.Utils.Array.GetRandom(enemyTypes);
+        const isStar = Phaser.Math.Between(1, 4) === 1; // 1 op de 5 spawns is een ster
 
-        const enemy = this.enemies.create(this.scale.width + 50, randomY, randomEnemy)
-            .setOrigin(0.5)
-            .setScale(0.8)
-            .setDepth(50)
-            .setAngle(Phaser.Math.Between(-180, 180));
+        if (isStar) {
+            const starType = Phaser.Utils.Array.GetRandom(starTypes);
+            const star = this.stars.create(this.scale.width + 50, randomY, starType)
+                .setOrigin(0.5)
+                .setScale(1)
+                .setDepth(50);
 
-        const width = enemy.width * 0.8;
-        const height = enemy.height * 0.8;
-        enemy.setSize(width, height);
-        enemy.setOffset((enemy.width - width) / 2, (enemy.height - height) / 2);
+            star.setVelocityX(-300);
+            star.setData('points', starType === 'star_gold' ? 10 : 5);
 
-        enemy.setVelocityX(-350);
+            const width = star.width * 1;
+            const height = star.height * 1;
+            star.setSize(width, height);
+            star.setOffset((star.width - width) / 2, (star.height - height) / 2);
+        } else {
+            const randomEnemy = Phaser.Utils.Array.GetRandom(enemyTypes);
 
-        this.physics.add.overlap(this.rocketBody, enemy, this.triggerGameOver, null, this);
+            const enemy = this.enemies.create(this.scale.width + 50, randomY, randomEnemy)
+                .setOrigin(0.5)
+                .setScale(0.8)
+                .setDepth(50)
+                .setAngle(Phaser.Math.Between(-180, 180));
+
+            const width = enemy.width * 0.8;
+            const height = enemy.height * 0.8;
+            enemy.setSize(width, height);
+            enemy.setOffset((enemy.width - width) / 2, (enemy.height - height) / 2);
+
+            enemy.setVelocityX(-350);
+
+            this.physics.add.overlap(this.rocketBody, enemy, this.triggerGameOver, null, this);
+        }
+    }
+
+    collectStar(rocket, star) {
+        this.updateScore(star.getData('points'));
+        star.destroy();
+    }
+
+    updateScore(amount) {
+        this.score += amount;
+        this.scoreText.setText(`Score: ${this.score}`);
     }
 
     triggerGameOver() {
