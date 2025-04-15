@@ -1,11 +1,12 @@
 import { StartScene } from './scenes/StartScene.js';
 import { Game } from './scenes/Game.js';
+import { GameOver } from './scenes/GameOver.js';
 
 const config = {
     type: Phaser.AUTO,
     width: window.innerWidth,
     height: window.innerHeight,
-    scene: [StartScene, Game],
+    scene: [StartScene, Game, GameOver],
     parent: 'game-container',
     backgroundColor: '#000000',
     physics: {

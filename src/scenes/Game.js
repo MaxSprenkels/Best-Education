@@ -10,30 +10,35 @@ export class Game extends Phaser.Scene {
         this.load.image('rocket_fuel', 'assets/images/rocket_fuelA.png');
         this.load.image('rocket_sides', 'assets/images/rocket_sidesA.png');
         this.load.image('rocket_top', 'assets/images/rocket_topA.png');
+        this.load.audio('hoverSound', 'assets/sounds/hover.wav');
+        this.load.audio('clickSound', 'assets/sounds/click.wav');
+        this.load.audio('gameOverSound', 'assets/sounds/game-over.wav');
+
     }
 
     create() {
+        this.gameOverTriggered = false;
+        this.isGameOver = false;
         // Achtergrond
         this.add.image(0, 0, 'background')
             .setOrigin(0)
             .setDisplaySize(this.scale.width, this.scale.height)
             .setDepth(-1);
 
-        // Score
-        this.scoreText = this.add.text(this.scale.width - 16, 16, 'Score: 0', {
+        // Score rechtsboven
+        this.scoreText = this.add.text(this.scale.width / 2, 16, 'Score: 0', {
             fontSize: '24px',
             fill: '#ffffff'
         })
-        .setOrigin(1, 0)
-        .setScrollFactor(0)
-        .setDepth(100);
-        
+            .setOrigin(1, 0)
+            .setScrollFactor(0)
+            .setDepth(100);
 
         // Startpositie
         const startX = 100;
         const startY = this.scale.height / 2;
 
-        // Raket-container
+        // Raket container
         this.rocketContainer = this.add.container(startX, startY, [
             this.add.image(0, 0, 'rocket_base').setOrigin(0.5).setScale(0.7),
             this.add.image(0, -30, 'rocket_finns').setOrigin(0.5).setScale(0.7),
@@ -48,7 +53,15 @@ export class Game extends Phaser.Scene {
             .setVisible(false)
             .setCollideWorldBounds(true);
 
+        // Collision met wereldrand
         this.physics.world.setBounds(0, 0, this.scale.width, this.scale.height);
+        this.physics.world.setBoundsCollision(true, true, true, true);
+        this.rocketBody.body.onWorldBounds = true;
+        this.physics.world.on('worldbounds', (body) => {
+            if (body.gameObject === this.rocketBody) {
+                this.triggerGameOver();
+            }
+        });
 
         this.setupControls();
     }
@@ -76,5 +89,22 @@ export class Game extends Phaser.Scene {
 
         this.rocketContainer.x = this.rocketBody.x;
         this.rocketContainer.y = this.rocketBody.y;
+
+        if (this.rocketBody.y < 0 || this.rocketBody.y > this.scale.height) {
+            this.triggerGameOver();
+        }
+    }
+
+    triggerGameOver() {
+        if (this.gameOverTriggered) return;
+        this.gameOverTriggered = true;
+        this.isGameOver = true;
+
+        this.sound.play('gameOverSound');
+
+        this.scene.start('GameOver', {
+            background: this.add.image(0, 0, 'background').setOrigin(0).setDisplaySize(this.scale.width, this.scale.height).setDepth(-1),
+            score: this.scoreText.text
+        });
     }
 }
