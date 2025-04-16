@@ -1,22 +1,25 @@
-export class GameOver extends Phaser.Scene {
+export class WinScene extends Phaser.Scene {
     constructor() {
-        super({ key: 'GameOver' });
+        super({ key: 'WinScene' });
     }
 
     preload() {
         this.load.audio('hoverSound', 'assets/sounds/hover.wav');
         this.load.audio('clickSound', 'assets/sounds/click.wav');
         this.load.image('logo', 'assets/images/logo.png');
-        this.load.image('rocketIcon', 'assets/images/rocket.png');
     }
 
-    create(data) {
+    init(data) {
+        this.score = data.score;
+        this.background = data.background;
+    }
+
+    create() {
         const centerX = this.scale.width / 2;
         const centerY = this.scale.height / 2;
 
         // Achtergrond behouden
-        const background = data.background;
-        background.setOrigin(0).setDisplaySize(this.scale.width, this.scale.height).setDepth(-1);
+        this.background.setOrigin(0).setDisplaySize(this.scale.width, this.scale.height).setDepth(-1);
 
         // Sounds
         const hoverSound = this.sound.add('hoverSound');
@@ -29,21 +32,21 @@ export class GameOver extends Phaser.Scene {
         logo.setScale(0.08);
 
         // Titel
-        this.add.text(centerX, centerY - 120, 'Game over', {
-            fontSize: '64px',
+        this.add.text(centerX, centerY - 120, '🎉 Je hebt gewonnen! 🎉', {
+            fontSize: '48px',
             fill: '#ffffff'
         }).setOrigin(0.5);
 
         // Score
-        this.add.text(centerX, centerY - 50, `${data.score}`, {
+        this.add.text(centerX, centerY - 50, `${this.score}`, {
             fontSize: '32px',
             fill: '#ffffff'
         }).setOrigin(0.5);
 
-        const createButton = (text, onClick, offsetY, icon) => {
+        const createButton = (text, onClick, offsetY) => {
             const container = this.add.container(centerX, centerY + offsetY).setDepth(201);
 
-            const bg = this.add.rectangle(0, 0, 270, 60, 0xed1b30)
+            const bg = this.add.rectangle(0, 0, 270, 60, 0xff4c5c)
                 .setStrokeStyle(2, 0xffffff)
                 .setOrigin(0.5);
 
@@ -53,11 +56,6 @@ export class GameOver extends Phaser.Scene {
                 fontStyle: 'bold'
             }).setOrigin(0.5);
 
-            if (icon) {
-                this.add.image(-90, 0, icon)
-                    .setOrigin(0.5)
-                    .setScale(0.4);
-            }
             [bg, label].forEach(el => {
                 el.setInteractive({ useHandCursor: true });
 
@@ -86,7 +84,7 @@ export class GameOver extends Phaser.Scene {
                         ease: 'Power2'
                     });
 
-                    bg.setFillStyle(0xed1b30);
+                    bg.setFillStyle(0xff4c5c);
                 });
 
                 el.on('pointerdown', () => {
