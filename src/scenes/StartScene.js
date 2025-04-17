@@ -4,7 +4,7 @@ export class StartScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('background', 'assets/images/background.png'); // Achtergrond
+        this.load.image('background', 'assets/images/background.png');
         this.load.image('logo', 'assets/images/logo-zonder-text.png');
         this.load.audio('hoverSound', 'assets/sounds/hover.wav');
         this.load.audio('clickSound', 'assets/sounds/click.wav');
