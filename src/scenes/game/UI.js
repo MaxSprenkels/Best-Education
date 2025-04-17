@@ -70,7 +70,7 @@ export default class UI {
     }
 
     checkWinCondition() {
-        if (this.scene.score >= 15 && !this.scene.gameOverTriggered) {
+        if (this.scene.score >= 100 && !this.scene.gameOverTriggered) {
             this.scene.gameOverTriggered = true;
             this.scene.isGameOver = true;
             this.gameWinSound.play();
