@@ -25,8 +25,16 @@ export class Game extends Phaser.Scene {
         this.load.audio('clickSound', 'assets/sounds/click.wav');
         this.load.audio('gameOverSound', 'assets/sounds/game-over.wav');
         this.load.audio('collectSound', 'assets/sounds/collect.mp3');
+        this.load.audio('shieldSound', 'assets/sounds/shield.wav');
+        this.load.audio('gameWinSound', 'assets/sounds/game-win.wav');
         // Powerups
         this.load.image('magnet', 'assets/images/magnet.png');
+        this.load.audio('magnetSound', 'assets/sounds/magnet.mp3');
+        this.load.image('shield', 'assets/images/shield.png');
+        this.load.image('shieldEffect', 'assets/images/shield-effect.png');
+        this.load.image('boost', 'assets/boost.png');
+        this.load.audio('boostSound', 'assets/boost.mp3');
+
     }
 
     create() {
@@ -35,7 +43,6 @@ export class Game extends Phaser.Scene {
         const outerRadius = 80;
         const innerRadius = 40;
 
-        // Gradient ring effect
         const gradientSteps = 10;
         for (let i = gradientSteps; i >= 1; i--) {
             const alpha = 0.05 * i;
@@ -54,30 +61,33 @@ export class Game extends Phaser.Scene {
             .setVisible(false)
             .setScale(1.2);
 
+        this.shieldEffect = this.add.image(0, 0, 'shieldEffect')
+            .setOrigin(0.5)
+            .setScale(0.4)
+            .setDepth(0)
+            .setVisible(false);
+
+            
 
         this.gameOverTriggered = false;
         this.isGameOver = false;
         this.score = 0;
         this.isMagnetActive = false;
+        this.isShieldActive = false;
 
-
-        // Achtergrond
         this.add.image(0, 0, 'background')
             .setOrigin(0)
             .setDisplaySize(this.scale.width, this.scale.height)
             .setDepth(-1);
 
-        // Score
         this.scoreText = this.add.text(this.scale.width / 2, 16, 'Score: 0', {
             fontSize: '24px',
             fill: '#ffffff'
         }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(100);
 
-        // Startpositie raket
         const startX = 100;
         const startY = this.scale.height / 2;
 
-        // Raket
         this.rocketContainer = this.add.container(startX, startY, [
             this.add.image(0, 0, 'rocket_base').setOrigin(0.5).setScale(0.7),
             this.add.image(0, -30, 'rocket_finns').setOrigin(0.5).setScale(0.7),
@@ -100,11 +110,8 @@ export class Game extends Phaser.Scene {
             if (body.gameObject === this.rocketBody) {
                 this.triggerGameOver();
             }
-
-
         });
 
-        // Groepen
         this.enemies = this.physics.add.group();
         this.stars = this.physics.add.group();
 
@@ -118,11 +125,18 @@ export class Game extends Phaser.Scene {
         this.physics.add.overlap(this.rocketBody, this.stars, this.collectStar, null, this);
         this.setupControls();
         this.collectSound = this.sound.add('collectSound');
+        this.shieldSound = this.sound.add('shieldSound');
+        this.magnetSound = this.sound.add('magnetSound', { loop: true });
 
         this.powerUps = this.physics.add.group();
 
-        this.physics.add.overlap(this.rocketBody, this.powerUps, this.activateMagnet, null, this);
-
+        this.physics.add.overlap(this.rocketBody, this.powerUps, (player, powerUp) => {
+            if (powerUp.texture.key === 'magnet') {
+                this.activateMagnet(powerUp);
+            } else if (powerUp.texture.key === 'shield') {
+                this.activateShield(powerUp);
+            }
+        }, null, this);
     }
 
     setupControls() {
@@ -137,18 +151,15 @@ export class Game extends Phaser.Scene {
     }
 
     update() {
-        this.glow.x = this.rocketContainer.x;
-        this.glow.y = this.rocketContainer.y;
         this.glow.setVisible(this.isMagnetActive);
+        this.glow.setPosition(this.rocketContainer.x, this.rocketContainer.y);
+        this.shieldEffect.setVisible(this.isShieldActive);
+        this.shieldEffect.setPosition(this.rocketContainer.x, this.rocketContainer.y);
 
         if (this.isMagnetActive) {
-            this.glow.setVisible(true);
             const scale = 1.2 + Math.sin(this.time.now * 0.005) * 0.05;
             this.glow.setScale(scale);
-        } else {
-            this.glow.setVisible(false);
         }
-
 
         const speed = 300;
         this.rocketBody.setVelocity(0);
@@ -178,22 +189,18 @@ export class Game extends Phaser.Scene {
             }
 
             if (this.isMagnetActive) {
-                this.stars.getChildren().forEach(star => {
-                    const dx = this.rocketBody.x - star.x;
-                    const dy = this.rocketBody.y - star.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-
-                    if (distance < 200) {
-                        const pullSpeed = 200;
-                        const angle = Math.atan2(dy, dx);
-                        star.setVelocity(
-                            Math.cos(angle) * pullSpeed,
-                            Math.sin(angle) * pullSpeed
-                        );
-                    }
-                });
+                const dx = this.rocketBody.x - star.x;
+                const dy = this.rocketBody.y - star.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < 200) {
+                    const pullSpeed = 200;
+                    const angle = Math.atan2(dy, dx);
+                    star.setVelocity(
+                        Math.cos(angle) * pullSpeed,
+                        Math.sin(angle) * pullSpeed
+                    );
+                }
             }
-
         });
     }
 
@@ -201,10 +208,10 @@ export class Game extends Phaser.Scene {
         const enemyTypes = ['enemyBlack1', 'enemyBlue1', 'enemyGreen1', 'enemyRed1'];
         const starTypes = ['star_silver', 'star_gold'];
         const randomY = Phaser.Math.Between(60, this.scale.height - 60);
-        const rand = Phaser.Math.Between(1, 6);
+        const rand = Phaser.Math.Between(1, 8);
         const isStar = rand === 1;
         const isMagnet = rand === 2;
-
+        const isShield = rand === 3;
 
         if (isStar) {
             const starType = Phaser.Utils.Array.GetRandom(starTypes);
@@ -215,38 +222,34 @@ export class Game extends Phaser.Scene {
                 .setVelocityX(-300)
                 .setData('points', starType === 'star_gold' ? 10 : 5);
 
-            const width = star.width * 1;
-            const height = star.height * 1;
-            star.setSize(width, height);
-            star.setOffset((star.width - width) / 2, (star.height - height) / 2);
-        }
-        else if (isMagnet) {
+            star.setSize(star.width, star.height);
+        } else if (isMagnet) {
             const magnet = this.powerUps.create(this.scale.width + 50, randomY, 'magnet')
                 .setOrigin(0.5)
                 .setScale(0.7)
                 .setDepth(50)
                 .setVelocityX(-300);
-
-            const width = magnet.width * 0.7;
-            const height = magnet.height * 0.7;
-            magnet.setSize(width, height);
-            magnet.setOffset((magnet.width - width) / 2, (magnet.height - height) / 2);
-        }
-        else {
-            const randomEnemy = Phaser.Utils.Array.GetRandom(enemyTypes);
-            const enemy = this.enemies.create(this.scale.width + 50, randomY, randomEnemy)
+        } else if (isShield) {
+            const shield = this.powerUps.create(this.scale.width + 50, randomY, 'shield')
+                .setOrigin(0.5)
+                .setScale(0.08)
+                .setDepth(50)
+                .setVelocityX(-300);
+        } else {
+            const enemy = this.enemies.create(this.scale.width + 50, randomY, Phaser.Utils.Array.GetRandom(enemyTypes))
                 .setOrigin(0.5)
                 .setScale(0.8)
                 .setDepth(50)
                 .setAngle(Phaser.Math.Between(-180, 180))
                 .setVelocityX(-350);
 
-            const width = enemy.width * 0.8;
-            const height = enemy.height * 0.8;
-            enemy.setSize(width, height);
-            enemy.setOffset((enemy.width - width) / 2, (enemy.height - height) / 2);
-
-            this.physics.add.overlap(this.rocketBody, enemy, this.triggerGameOver, null, this);
+            this.physics.add.overlap(this.rocketBody, enemy, (rocket, enemy) => {
+                if (this.isShieldActive) {
+                    enemy.destroy();
+                } else {
+                    this.triggerGameOver();
+                }
+            }, null, this);
         }
     }
 
@@ -256,18 +259,27 @@ export class Game extends Phaser.Scene {
         star.destroy();
     }
 
-
-    activateMagnet(player, magnet) {
+    activateMagnet(magnet) {
         magnet.destroy();
         this.isMagnetActive = true;
+        this.magnetSound.play();
 
-        // Na 5 seconden stopt het effect
         this.time.delayedCall(5000, () => {
             this.isMagnetActive = false;
+            this.magnetSound.stop();
         }, [], this);
     }
 
 
+    activateShield(shield) {
+        shield.destroy();
+        this.isShieldActive = true;
+        this.shieldSound.play();
+
+        this.time.delayedCall(5000, () => {
+            this.isShieldActive = false;
+        }, [], this);
+    }
 
     updateScore(amount) {
         this.score += amount;
@@ -276,23 +288,26 @@ export class Game extends Phaser.Scene {
     }
 
     checkWinCondition() {
-        if (this.score >= 100 && !this.gameOverTriggered) {
+        if (this.score >= 15 && !this.gameOverTriggered) {
             this.gameOverTriggered = true;
             this.isGameOver = true;
+
+            // Speel de win-sound af
+            this.sound.play('gameWinSound');
 
             this.scene.start('WinScene', {
                 background: this.add.image(0, 0, 'background').setOrigin(0).setDisplaySize(this.scale.width, this.scale.height).setDepth(-1),
                 score: this.scoreText.text
             });
-
         }
     }
 
+
     triggerGameOver() {
-        if (this.gameOverTriggered) return;
+        if (this.gameOverTriggered || this.isShieldActive) return;
+
         this.gameOverTriggered = true;
         this.isGameOver = true;
-
         this.sound.play('gameOverSound');
 
         this.scene.start('GameOver', {
