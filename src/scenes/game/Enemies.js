@@ -5,7 +5,7 @@ export default class Enemies {
         this.stars = this.scene.physics.add.group();
         this.lastEnemyY = null;
         this.activeStars = 0;
-        this.maxActiveStars = 1;
+        this.maxActiveStars = 2;
 
         this.scene.time.addEvent({
             delay: this.getCurrentEnemyDelay(),
@@ -15,14 +15,14 @@ export default class Enemies {
         });
 
         this.scene.time.addEvent({
-            delay: Phaser.Math.Between(10000, 15000),
+            delay: Phaser.Math.Between(4000, 7000),
             callback: this.tryCreateStar,
             callbackScope: this,
             loop: true
         });
 
         this.scene.time.addEvent({
-            delay: Phaser.Math.Between(20000, 30000),
+            delay: Phaser.Math.Between(30000, 45000),
             callback: this.tryCreatePowerUp,
             callbackScope: this,
             loop: true
@@ -33,9 +33,9 @@ export default class Enemies {
         const score = this.scene.score;
         if (score < 20) return 600;
         if (score < 40) return 500;
-        if (score < 60) return 400;
-        if (score < 80) return 300;
-        return 200;
+        if (score < 60) return 450;
+        if (score < 80) return 400;
+        return 350;
     }
 
     tryCreateStar() {
@@ -68,25 +68,38 @@ export default class Enemies {
     }
 
     createEnemy() {
-        const enemyTypes = ['enemyBlack1', 'enemyBlue1', 'enemyGreen1', 'enemyRed1'];
-        let randomY;
-
-        do {
-            randomY = Phaser.Math.Between(60, this.scene.scale.height - 60);
-        } while (this.lastEnemyY && Math.abs(randomY - this.lastEnemyY) < 100);
-
-        this.lastEnemyY = randomY;
-
         const rand = Phaser.Math.Between(1, 10);
-
-        if (rand === 1) {
-            if (Phaser.Math.Between(1, 3) === 1) {
+        if (rand <= 2) {
+            if (Phaser.Math.Between(1, 3) <= 2) {
                 this.tryCreateStar();
             } else {
                 this.tryCreatePowerUp();
             }
-        } else {
-            const enemy = this.group.create(this.scene.scale.width + 50, randomY,
+            return;
+        }
+
+        const enemyTypes = ['enemyBlack1', 'enemyBlue1', 'enemyGreen1', 'enemyRed1'];
+        const score = this.scene.score;
+        let enemiesToSpawn = 1;
+        if (score >= 20) enemiesToSpawn = 2;
+        if (score >= 40) enemiesToSpawn = 3;
+        if (score >= 60) enemiesToSpawn = 4;
+        if (score >= 80) enemiesToSpawn = 5;
+
+        const usedY = [];
+
+        for (let i = 0; i < enemiesToSpawn; i++) {
+            let randomY;
+            let attempts = 0;
+
+            do {
+                randomY = Phaser.Math.Between(60, this.scene.scale.height - 60);
+                attempts++;
+            } while (usedY.some(y => Math.abs(y - randomY) < 80) && attempts < 10);
+
+            usedY.push(randomY);
+
+            this.group.create(this.scene.scale.width + 50 + i * 20, randomY,
                 Phaser.Utils.Array.GetRandom(enemyTypes))
                 .setOrigin(0.5)
                 .setScale(0.8)
