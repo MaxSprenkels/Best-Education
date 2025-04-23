@@ -12,6 +12,11 @@ export default class Preloader {
         this.scene.load.image('rocket_fuel', 'assets/images/rocket_fuelA.png');
         this.scene.load.image('rocket_sides', 'assets/images/rocket_sidesA.png');
         this.scene.load.image('rocket_top', 'assets/images/rocket_topA.png');
+        this.scene.load.spritesheet('explosion', 'assets/images/explosion.png', {
+            frameWidth: 96,
+            frameHeight: 96
+        });
+        this.scene.load.audio('explosionSound', 'assets/sounds/explosion.wav');
         // Enemies
         this.scene.load.image('enemyBlack1', 'assets/images/enemyBlack1.png');
         this.scene.load.image('enemyBlue1', 'assets/images/enemyBlue1.png');
@@ -27,6 +32,7 @@ export default class Preloader {
         this.scene.load.audio('collectSound', 'assets/sounds/collect.mp3');
         this.scene.load.audio('shieldSound', 'assets/sounds/shield.wav');
         this.scene.load.audio('gameWinSound', 'assets/sounds/game-win.wav');
+        this.scene.load.audio('backgroundMusic', 'assets/sounds/background.mp3');
         // Powerups
         this.scene.load.image('magnet', 'assets/images/magnet.png');
         this.scene.load.audio('magnetSound', 'assets/sounds/magnet.mp3');

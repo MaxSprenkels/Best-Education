@@ -18,6 +18,7 @@ export default class Game extends Phaser.Scene {
         // Game state
         this.gameOverTriggered = false;
         this.isGameOver = false;
+        this.isPaused = false;
         this.score = 0;
         this.isMagnetActive = false;
         this.isShieldActive = false;
@@ -30,17 +31,57 @@ export default class Game extends Phaser.Scene {
 
         this.setupInteractions();
 
+        // Background music
+        this.backgroundMusic = this.sound.add('backgroundMusic', {
+            volume: 0.3,
+            loop: true
+        });
+        this.backgroundMusic.play();
+
         // Wereld bounds
         this.physics.world.setBounds(0, 0, this.scale.width, this.scale.height);
         this.physics.world.setBoundsCollision(true, true, true, true);
+
+        // Animaties
+        this.anims.create({
+            key: 'explode',
+            frames: this.anims.generateFrameNumbers('explosion', { start: 0, end: 11 }),
+            frameRate: 15,
+            hideOnComplete: true
+        });
+
+        // Pauze overlay
+        this.pauseOverlay = this.add.rectangle(
+            this.scale.width / 2,
+            this.scale.height / 2,
+            this.scale.width,
+            this.scale.height,
+            0x000000,
+            0.6
+        ).setDepth(200).setVisible(false);
+
+        this.pauseText = this.add.text(
+            this.scale.width / 2,
+            this.scale.height / 2,
+            'PAUSED',
+            {
+                fontSize: '48px',
+                color: '#ffffff',
+                fontStyle: 'bold',
+            }
+        ).setOrigin(0.5).setDepth(201).setVisible(false);
+
+        // Pauze controls
+        this.input.keyboard.on('keydown-P', this.togglePause, this);
+        this.input.keyboard.on('keydown-ESC', this.togglePause, this);
     }
 
     setupInteractions() {
         this.physics.add.overlap(
-            this.player.rocketBody, 
-            this.enemies.group, 
-            this.enemies.handleEnemyCollision, 
-            null, 
+            this.player.rocketBody,
+            this.enemies.group,
+            this.enemies.handleEnemyCollision,
+            null,
             this.enemies
         );
 
@@ -62,11 +103,38 @@ export default class Game extends Phaser.Scene {
     }
 
     update() {
-        if (this.isGameOver) return;
+        if (this.isGameOver || this.isPaused) return;
 
         this.player.update();
         this.enemies.update();
         this.powerUps.update();
         this.ui.updateEffects(this);
+
+        // Wincondition
+        if (this.score >= 100 && !this.gameOverTriggered) {
+            this.gameOverTriggered = true;
+            this.isGameOver = true;
+
+            this.backgroundMusic.stop();
+
+            this.scene.start('WinScene', {
+                score: this.score,
+                background: this.add.image(0, 0, 'background'),
+            });
+        }
+    }
+
+    togglePause() {
+        this.isPaused = !this.isPaused;
+        this.pauseOverlay.setVisible(this.isPaused);
+        this.pauseText.setVisible(this.isPaused);
+
+        if (this.isPaused) {
+            this.physics.world.pause();
+            this.backgroundMusic.pause();
+        } else {
+            this.physics.world.resume();
+            this.backgroundMusic.resume();
+        }
     }
 }
