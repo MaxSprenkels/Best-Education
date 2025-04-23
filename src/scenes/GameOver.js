@@ -35,7 +35,7 @@ export class GameOver extends Phaser.Scene {
             fill: '#ffffff'
         }).setOrigin(0.5);
 
-        this.add.text(centerX, centerY - 50, `${data.score}`, {
+        this.add.text(centerX, centerY - 50, `Score: ${data.score}`, {
             fontSize: '32px',
             fill: '#ffffff'
         }).setOrigin(0.5);

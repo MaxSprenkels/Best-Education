@@ -40,6 +40,14 @@ export default class Game extends Phaser.Scene {
         // Wereld bounds
         this.physics.world.setBounds(0, 0, this.scale.width, this.scale.height);
         this.physics.world.setBoundsCollision(true, true, true, true);
+
+        this.anims.create({
+            key: 'explode',
+            frames: this.anims.generateFrameNumbers('explosion', { start: 0, end: 11 }),
+            frameRate: 15,
+            hideOnComplete: true
+        });
+
     }
 
     setupInteractions() {

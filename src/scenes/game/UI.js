@@ -55,6 +55,7 @@ export default class UI {
         this.shieldSound = this.scene.sound.add('shieldSound');
         this.gameOverSound = this.scene.sound.add('gameOverSound');
         this.gameWinSound = this.scene.sound.add('gameWinSound');
+        this.explosionSound = this.scene.sound.add('explosionSound');
     }
 
     collectStar(rocket, star) {
@@ -90,16 +91,37 @@ export default class UI {
 
         this.scene.gameOverTriggered = true;
         this.scene.isGameOver = true;
-        this.gameOverSound.play();
 
-        this.scene.scene.start('GameOver', {
-            background: this.scene.add.image(0, 0, 'background')
-                .setOrigin(0)
-                .setDisplaySize(this.scene.scale.width, this.scene.scale.height)
-                .setDepth(-1),
-            score: this.scoreText.text
+        // Stop beweging van de speler
+        this.scene.player.rocketBody.setVelocity(0, 0);
+
+        // Verberg speler tijdelijk
+        this.scene.player.rocketContainer.setVisible(false);
+
+        // Zet explosie op positie van de speler
+        const explosion = this.scene.add.sprite(
+            this.scene.player.rocketContainer.x,
+            this.scene.player.rocketContainer.y,
+            'explosion'
+        ).setOrigin(0.5)
+            .setScale(1.5)
+            .setDepth(1000);
+
+        explosion.play('explode');
+        this.explosionSound.play();
+
+        explosion.on('animationcomplete', () => {
+            this.scene.scene.start('GameOver', {
+                score: this.scene.score,
+                background: this.scene.add.image(0, 0, 'background')
+                    .setOrigin(0)
+                    .setDisplaySize(this.scene.scale.width, this.scene.scale.height)
+                    .setDepth(-1),
+            });
         });
     }
+
+
 
     activateShield(shield) {
         shield.destroy();
