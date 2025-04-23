@@ -27,6 +27,7 @@ export default class Preloader {
         this.scene.load.audio('collectSound', 'assets/sounds/collect.mp3');
         this.scene.load.audio('shieldSound', 'assets/sounds/shield.wav');
         this.scene.load.audio('gameWinSound', 'assets/sounds/game-win.wav');
+        this.scene.load.audio('backgroundMusic', 'assets/sounds/background.mp3');
         // Powerups
         this.scene.load.image('magnet', 'assets/images/magnet.png');
         this.scene.load.audio('magnetSound', 'assets/sounds/magnet.mp3');
