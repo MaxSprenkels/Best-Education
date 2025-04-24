@@ -80,32 +80,44 @@ export default class Enemies {
 
         const enemyTypes = ['enemyBlack1', 'enemyBlue1', 'enemyGreen1', 'enemyRed1'];
         const score = this.scene.score;
+        const screenHeight = this.scene.scale.height;
+
+        const isSmallScreen = screenHeight <= 768;
+
         let enemiesToSpawn = 1;
-        if (score >= 20) enemiesToSpawn = 2;
-        if (score >= 40) enemiesToSpawn = 3;
-        if (score >= 60) enemiesToSpawn = 4;
-        if (score >= 80) enemiesToSpawn = 5;
+
+        if (!isSmallScreen) {
+            if (score >= 40) enemiesToSpawn = 2;
+            if (score >= 80) enemiesToSpawn = 3;
+
+            // Maximale limiet voor grote schermen
+            enemiesToSpawn = Math.min(enemiesToSpawn, 3);
+        }
 
         const usedY = [];
+        const baseVelocity = -350;
 
         for (let i = 0; i < enemiesToSpawn; i++) {
             let randomY;
             let attempts = 0;
 
             do {
-                randomY = Phaser.Math.Between(60, this.scene.scale.height - 60);
+                randomY = Phaser.Math.Between(60, screenHeight - 60);
                 attempts++;
-            } while (usedY.some(y => Math.abs(y - randomY) < 80) && attempts < 10);
+            } while (
+                usedY.some(y => Math.abs(y - randomY) < 100) &&
+                attempts < 10
+            );
 
             usedY.push(randomY);
 
-            this.group.create(this.scene.scale.width + 50 + i * 20, randomY,
+            this.group.create(this.scene.scale.width + 50 + i * 30, randomY,
                 Phaser.Utils.Array.GetRandom(enemyTypes))
                 .setOrigin(0.5)
                 .setScale(0.8)
                 .setDepth(50)
                 .setAngle(Phaser.Math.Between(-180, 180))
-                .setVelocityX(-350);
+                .setVelocityX(baseVelocity);
         }
     }
 
