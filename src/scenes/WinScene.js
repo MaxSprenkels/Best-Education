@@ -1,21 +1,23 @@
 export class WinScene extends Phaser.Scene {
     constructor() {
-        super({ key: 'WinScene' });
+        super({ key: 'WinScene' }); // Geef de scene een unieke key
     }
 
     preload() {
+        // Laad audio en logo voor deze scene
         this.load.audio('hoverSound', 'assets/sounds/hover.wav');
         this.load.audio('clickSound', 'assets/sounds/click.wav');
         this.load.image('logo', 'assets/images/logo.png');
     }
 
     init(data) {
+        // Ontvang score en achtergrond mee vanuit de vorige scene
         this.score = data.score;
         this.background = data.background;
     }
 
     create() {
-        // Stop achtergrondmuziek
+        // Stop achtergrondmuziek als die nog speelt
         if (this.sound.get('backgroundMusic')?.isPlaying) {
             this.sound.get('backgroundMusic').stop();
         }
@@ -23,16 +25,22 @@ export class WinScene extends Phaser.Scene {
         const centerX = this.scale.width / 2;
         const centerY = this.scale.height / 2;
 
-        this.background.setOrigin(0).setDisplaySize(this.scale.width, this.scale.height).setDepth(-1);
+        // Toon de achtergrondafbeelding
+        this.background
+            .setOrigin(0)
+            .setDisplaySize(this.scale.width, this.scale.height)
+            .setDepth(-1);
 
+        // Voeg geluidseffecten toe
         const hoverSound = this.sound.add('hoverSound');
         const clickSound = this.sound.add('clickSound');
         let soundCooldown = false;
 
+        // Logo
         const logo = this.add.image(centerX, centerY - 200, 'logo');
-        logo.setOrigin(0.5);
-        logo.setScale(0.08);
+        logo.setOrigin(0.5).setScale(0.08);
 
+        // Tekst "Je hebt gewonnen!" en de score
         this.add.text(centerX, centerY - 120, '🎉 Je hebt gewonnen! 🎉', {
             fontSize: '48px',
             fill: '#ffffff'
@@ -43,6 +51,7 @@ export class WinScene extends Phaser.Scene {
             fill: '#ffffff'
         }).setOrigin(0.5);
 
+        // Herbruikbare functie om knoppen aan te maken
         const createButton = (text, onClick, offsetY) => {
             const container = this.add.container(centerX, centerY + offsetY).setDepth(201);
 
@@ -59,6 +68,7 @@ export class WinScene extends Phaser.Scene {
             [bg, label].forEach(el => {
                 el.setInteractive({ useHandCursor: true });
 
+                // Hover effect + geluidsfeedback
                 el.on('pointerover', () => {
                     if (!soundCooldown) {
                         hoverSound.play();
@@ -76,6 +86,7 @@ export class WinScene extends Phaser.Scene {
                     bg.setFillStyle(0xff4c5c);
                 });
 
+                // Verlaat hover
                 el.on('pointerout', () => {
                     this.tweens.add({
                         targets: container,
@@ -87,6 +98,7 @@ export class WinScene extends Phaser.Scene {
                     bg.setFillStyle(0xff4c5c);
                 });
 
+                // Klik op knop
                 el.on('pointerdown', () => {
                     clickSound.play();
                     setTimeout(onClick, 150);
@@ -96,10 +108,12 @@ export class WinScene extends Phaser.Scene {
             container.add([bg, label]);
         };
 
+        // Speel opnieuw knop
         createButton('🔁 Opnieuw spelen', () => {
             this.scene.start('Game');
         }, 40);
 
+        // Terug naar het menu knop
         createButton('🏠 Terug naar menu', () => {
             this.scene.start('StartScene');
         }, 120);

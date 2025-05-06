@@ -10,39 +10,41 @@ export default class Game extends Phaser.Scene {
     }
 
     preload() {
+        // Laad alle assets in via de Preloader-klasse
         this.preloader = new Preloader(this);
         this.preloader.loadAssets();
     }
 
     create() {
-        // Game state
-        this.gameOverTriggered = false;
+        // Interne gamestates
+        this.gameOverTriggered = false; // voorkomt dubbele triggers
         this.isGameOver = false;
         this.isPaused = false;
         this.score = 0;
-        this.isMagnetActive = false;
-        this.isShieldActive = false;
+        this.isMagnetActive = false;  // wordt geactiveerd door power-up
+        this.isShieldActive = false;  // wordt geactiveerd door power-up
 
-        // Initialize components
+        // Initialiseer alle spelcomponenten
         this.ui = new UI(this);
         this.player = new Player(this);
         this.enemies = new Enemies(this);
         this.powerUps = new PowerUps(this);
 
+        // Stel overlap/botsingslogica in
         this.setupInteractions();
 
-        // Background music
+        // Speel achtergrondmuziek af
         this.backgroundMusic = this.sound.add('backgroundMusic', {
             volume: 0.3,
             loop: true
         });
         this.backgroundMusic.play();
 
-        // Wereld bounds
+        // Stel wereldgrenzen in voor physics
         this.physics.world.setBounds(0, 0, this.scale.width, this.scale.height);
         this.physics.world.setBoundsCollision(true, true, true, true);
 
-        // Animaties
+        // Maak explosieanimatie aan
         this.anims.create({
             key: 'explode',
             frames: this.anims.generateFrameNumbers('explosion', { start: 0, end: 11 }),
@@ -50,7 +52,7 @@ export default class Game extends Phaser.Scene {
             hideOnComplete: true
         });
 
-        // Pauze overlay
+        // Pauze-overlay en tekst
         this.pauseOverlay = this.add.rectangle(
             this.scale.width / 2,
             this.scale.height / 2,
@@ -71,12 +73,13 @@ export default class Game extends Phaser.Scene {
             }
         ).setOrigin(0.5).setDepth(201).setVisible(false);
 
-        // Pauze controls
+        // Pauzeer het spel via ESC of P
         this.input.keyboard.on('keydown-P', this.togglePause, this);
         this.input.keyboard.on('keydown-ESC', this.togglePause, this);
     }
 
     setupInteractions() {
+        // Botsing tussen speler en vijanden → trigger enemy collision
         this.physics.add.overlap(
             this.player.rocketBody,
             this.enemies.group,
@@ -85,6 +88,7 @@ export default class Game extends Phaser.Scene {
             this.enemies
         );
 
+        // Botsing tussen speler en power-ups → activeer power-up effect
         this.physics.add.overlap(
             this.player.rocketBody,
             this.powerUps.group,
@@ -93,6 +97,7 @@ export default class Game extends Phaser.Scene {
             this.powerUps
         );
 
+        // Botsing tussen speler en sterren → verhoog score
         this.physics.add.overlap(
             this.player.rocketBody,
             this.enemies.stars,
@@ -103,20 +108,23 @@ export default class Game extends Phaser.Scene {
     }
 
     update() {
+        // Stop update-loop als spel gepauzeerd of afgelopen is
         if (this.isGameOver || this.isPaused) return;
 
+        // Update alle game-onderdelen per frame
         this.player.update();
         this.enemies.update();
         this.powerUps.update();
         this.ui.updateEffects(this);
 
-        // Wincondition
+        // Winvoorwaarde: 100 punten
         if (this.score >= 100 && !this.gameOverTriggered) {
             this.gameOverTriggered = true;
             this.isGameOver = true;
 
             this.backgroundMusic.stop();
 
+            // Ga naar WinScene met score en achtergrond
             this.scene.start('WinScene', {
                 score: this.score,
                 background: this.add.image(0, 0, 'background'),
@@ -125,10 +133,14 @@ export default class Game extends Phaser.Scene {
     }
 
     togglePause() {
+        // Zet de pauzestatus om
         this.isPaused = !this.isPaused;
+
+        // Toon/verberg overlay en tekst
         this.pauseOverlay.setVisible(this.isPaused);
         this.pauseText.setVisible(this.isPaused);
 
+        // Pauzeer of hervat physics en muziek
         if (this.isPaused) {
             this.physics.world.pause();
             this.backgroundMusic.pause();

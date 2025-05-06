@@ -1,12 +1,13 @@
 export default class Enemies {
     constructor(scene) {
         this.scene = scene;
-        this.group = this.scene.physics.add.group();
-        this.stars = this.scene.physics.add.group();
+        this.group = this.scene.physics.add.group(); // Groep voor vijanden
+        this.stars = this.scene.physics.add.group(); // Groep voor sterren (punten)
         this.lastEnemyY = null;
         this.activeStars = 0;
-        this.maxActiveStars = 2;
+        this.maxActiveStars = 2; // Beperk het aantal actieve sterren op het scherm
 
+        // Event om herhaaldelijk vijanden te spawnen
         this.scene.time.addEvent({
             delay: this.getCurrentEnemyDelay(),
             callback: this.createEnemy,
@@ -14,6 +15,7 @@ export default class Enemies {
             loop: true
         });
 
+        // Event om sterren te spawnen
         this.scene.time.addEvent({
             delay: Phaser.Math.Between(4000, 7000),
             callback: this.tryCreateStar,
@@ -21,6 +23,7 @@ export default class Enemies {
             loop: true
         });
 
+        // Event om power-ups te spawnen
         this.scene.time.addEvent({
             delay: Phaser.Math.Between(30000, 45000),
             callback: this.tryCreatePowerUp,
@@ -29,6 +32,7 @@ export default class Enemies {
         });
     }
 
+    // Bepaalt spawnvertraging voor vijanden gebaseerd op de score
     getCurrentEnemyDelay() {
         const score = this.scene.score;
         if (score < 20) return 600;
@@ -38,6 +42,7 @@ export default class Enemies {
         return 350;
     }
 
+    // Probeert een ster te spawnen als het maximum nog niet bereikt is
     tryCreateStar() {
         if (this.activeStars >= this.maxActiveStars) return;
 
@@ -55,11 +60,13 @@ export default class Enemies {
 
         this.activeStars++;
 
+        // Verlaag actief aantal sterren wanneer een ster verdwijnt
         star.on('destroy', () => {
             this.activeStars--;
         });
     }
 
+    // Probeert een power-up te spawnen
     tryCreatePowerUp() {
         const powerUpTypes = ['magnet', 'shield'];
         const randomY = Phaser.Math.Between(60, this.scene.scale.height - 60);
@@ -67,8 +74,11 @@ export default class Enemies {
         this.scene.powerUps.createPowerUp(this.scene.scale.width + 50, randomY, type);
     }
 
+    // Spawnt vijanden (en soms een ster of power-up)
     createEnemy() {
         const rand = Phaser.Math.Between(1, 10);
+
+        // 20% kans op ster of power-up in plaats van vijand
         if (rand <= 2) {
             if (Phaser.Math.Between(1, 3) <= 2) {
                 this.tryCreateStar();
@@ -84,23 +94,23 @@ export default class Enemies {
 
         const isSmallScreen = screenHeight <= 768;
 
+        // Bepaalt hoeveel vijanden er tegelijk gespawned worden
         let enemiesToSpawn = 1;
-
         if (!isSmallScreen) {
             if (score >= 40) enemiesToSpawn = 2;
             if (score >= 80) enemiesToSpawn = 3;
-
-            // Maximale limiet voor grote schermen
             enemiesToSpawn = Math.min(enemiesToSpawn, 3);
         }
 
-        const usedY = [];
+        const usedY = []; // Houdt bij welke Y-posities al gebruikt zijn
         const baseVelocity = -350;
 
+        // Spawn meerdere vijanden zonder overlap
         for (let i = 0; i < enemiesToSpawn; i++) {
             let randomY;
             let attempts = 0;
 
+            // Vermijd dat vijanden te dicht bij elkaar spawnen
             do {
                 randomY = Phaser.Math.Between(60, screenHeight - 60);
                 attempts++;
@@ -111,6 +121,7 @@ export default class Enemies {
 
             usedY.push(randomY);
 
+            // Maak vijand en stel eigenschappen in
             this.group.create(this.scene.scale.width + 50 + i * 30, randomY,
                 Phaser.Utils.Array.GetRandom(enemyTypes))
                 .setOrigin(0.5)
@@ -121,14 +132,16 @@ export default class Enemies {
         }
     }
 
+    // Behandelt botsingen tussen raket en vijand
     handleEnemyCollision(rocket, enemy) {
         if (this.scene.isShieldActive) {
-            enemy.destroy();
+            enemy.destroy(); // Raket is beschermd
         } else {
-            this.scene.ui.triggerGameOver();
+            this.scene.ui.triggerGameOver(); // Spel is voorbij
         }
     }
 
+    // Update-functie: verwijder vijanden/sterren die buiten het scherm zijn
     update() {
         this.group.getChildren().forEach(enemy => {
             if (enemy.x < -enemy.width) enemy.destroy();
